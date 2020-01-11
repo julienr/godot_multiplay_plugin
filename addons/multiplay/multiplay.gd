@@ -16,6 +16,17 @@ var pids = []
 var editor_node
 
 func _enter_tree():
+	# https://dfaction.net/handling-custom-project-settings-using-gdscript/
+	if !ProjectSettings.has_setting("multiplay/cmdline_args"):
+		var pinfo =  {
+			"name": "multiplay/cmdline_args",
+			"type": TYPE_STRING,
+			"hint": PROPERTY_HINT_PLACEHOLDER_TEXT,
+			"hint_string": "Commandline arguments to pass to additional instances."
+		}
+		ProjectSettings.set_setting("multiplay/cmdline_args", "")
+		ProjectSettings.add_property_info(pinfo)
+
 	main_scene_filename = ProjectSettings.globalize_path(ProjectSettings.get_setting("application/run/main_scene"))
 	button = preload("res://addons/multiplay/button.tscn").instance()
 	button.connect("pressed", self, "on_click")
@@ -34,7 +45,10 @@ func _exit_tree():
 
 func on_click():
 	editor_node._quick_run()
-	var pid = OS.execute(OS.get_executable_path(), [main_scene_filename], false)
+	var cmdline_args = ProjectSettings.get_setting("multiplay/cmdline_args")
+	print("cmdline_args=%s" % cmdline_args)
+	cmdline_args = cmdline_args.split(" ")
+	var pid = OS.execute(OS.get_executable_path(), [main_scene_filename] + Array(cmdline_args), false)
 	pids.append(pid)
 	
 func _killall():
